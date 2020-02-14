@@ -46,3 +46,38 @@ def test_PamResponse():
     x = PamResponse()
     assert hasattr(x, 'resp_retcode')
     assert hasattr(x, 'resp')
+
+def test_PamAuthenticator():
+    x = PamAuthenticator()
+    assert hasattr(x, 'authenticate')
+    assert hasattr(x, 'end')
+    assert hasattr(x, 'open_session')
+    assert hasattr(x, 'close_session')
+    assert hasattr(x, 'misc_setenv')
+    assert hasattr(x, 'putenv')
+    assert hasattr(x, 'getenv')
+    assert hasattr(x, 'getenvlist')
+
+def test_null_service():
+    x = PamAuthenticator()
+    retval = x.authenticate("", "", service="\0")
+    assert retval == False
+    assert x.code == 4 # PAM_SYSTEM_ERR
+    assert x.reason == 'strings may not contain NUL'
+    assert x.handle == None
+
+def test_bad_service():
+    x = PamAuthenticator()
+    retval = x.authenticate("asdf", "", service="asdf")
+    assert retval == False
+    assert x.reason == 'Authentication failure'
+    assert x.code == 7 # PAM_AUTH_FAIL
+    assert x.handle == None
+
+def test_bad_auth():
+    x = PamAuthenticator()
+    retval = x.authenticate("asdf", "")
+    assert retval == False
+    assert x.reason == 'User not known to the underlying authentication module'
+    assert x.code == 10 # PAM_USER_UNKNOWN
+    assert x.handle == None
