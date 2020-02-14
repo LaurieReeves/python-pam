@@ -1,5 +1,6 @@
 VIRTUALENV = $(shell which virtualenv)
-PYTHONEXEC = python
+# Prefer python3
+PYTHONEXEC := $(shell if which python3 &>/dev/null ; then echo "python3" ; else echo "python2" ; fi)
 
 VERSION = `grep VERSION src/version.py | cut -d \' -f2`
 
@@ -31,7 +32,7 @@ coverage:
 current:
 	@echo $(VERSION)
 
-deps:
+deps: venv
 	. venv/bin/activate; python -m pip install --upgrade -qr requirements.txt
 
 install: clean venv deps
@@ -45,16 +46,17 @@ lint: pydeps
 
 preflight: bandit inspectortiger coverage test
 
-pydeps:
+pydeps: deps
 	. venv/bin/activate; pip install --upgrade -q pip flake8 bandit \
 	  pyre-check coverage pytest pytest-mock pytest-cov pytest-runner \
 	  mock minimock faker responses inspectortiger
 
-test: pydeps deps venv lint
+test: lint
 	. venv/bin/activate; py.test --cov=src tests -r w --capture=sys --cov-fail-under 99 -vv
 
 tox:
 	. venv/bin/activate; tox
 
 venv:
+	mkdir venv
 	$(VIRTUALENV) -p $(PYTHONEXEC) venv
